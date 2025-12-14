@@ -8,6 +8,15 @@ from pathlib import Path
 # Configuration
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
 
+# Optional debug display: set SHOW_CONFIG=1 in your Space to show a masked API_URL
+if os.environ.get("SHOW_CONFIG") == "1":
+    try:
+        from urllib.parse import urlparse
+        host = urlparse(API_URL).netloc or API_URL
+    except Exception:
+        host = API_URL
+    st.sidebar.info(f"API_URL: {host}")
+
 st.set_page_config(
     page_title="Customer Feedback",
     page_icon="⭐",
