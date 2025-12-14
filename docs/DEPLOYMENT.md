@@ -1,6 +1,86 @@
 # Deployment Guide
 
-## Hugging Face Spaces Deployment
+## Dashboard Deployment Options
+
+This project provides **three ways** to deploy the Streamlit dashboards:
+
+1. **Streamlit Community Cloud** — easiest, free tier, direct GitHub integration
+2. **Render** — simple Docker or native deployment, free tier available
+3. **Hugging Face Spaces** — Docker or native Streamlit SDK, good for ML projects
+
+Choose whichever platform you prefer. All three support environment variables for `API_URL` and `GEMINI_API_KEY`.
+
+---
+
+## Option 1: Streamlit Community Cloud (Recommended - Easiest)
+
+**Pros:** Free, GitHub integration, automatic deploys on push, simple secrets management  
+**Cons:** Public apps only on free tier
+
+### Steps:
+
+1. **Sign up / Login:**
+   - Go to https://share.streamlit.io/
+   - Sign in with GitHub
+
+2. **Deploy User Dashboard:**
+   - Click "New app"
+   - Repository: `rogerdemello/fynd-ai-dashboards`
+   - Branch: `main`
+   - Main file path: `src/dashboards/user_dashboard.py`
+   - Click "Deploy"
+
+3. **Configure Secrets:**
+   - In app settings → Secrets, add:
+     ```toml
+     API_URL = "https://fyndaidashboards.onrender.com"
+     GEMINI_API_KEY = "your-gemini-api-key"
+     ```
+
+4. **Repeat for Admin Dashboard:**
+   - Create another app with `src/dashboards/admin_dashboard.py`
+   - Use same secrets
+
+### Notes:
+- Auto-redeploys on git push
+- Free tier includes reasonable usage limits
+- Apps sleep after inactivity but wake quickly
+
+---
+
+## Option 2: Render Dashboard Deployment
+
+**Pros:** Docker support, free tier, custom domains  
+**Cons:** Free tier has cold starts
+
+### Steps:
+
+1. **Create New Web Service:**
+   - Go to https://render.com
+   - Click "New +" → "Web Service"
+   - Connect GitHub: `rogerdemello/fynd-ai-dashboards`
+
+2. **Configure User Dashboard:**
+   - **Name:** `fynd-ai-user-dashboard`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `streamlit run src/dashboards/user_dashboard.py --server.port $PORT --server.address 0.0.0.0`
+   - **Environment Variables:**
+     - `API_URL`: `https://fyndaidashboards.onrender.com`
+     - `GEMINI_API_KEY`: your-api-key
+
+3. **Repeat for Admin Dashboard:**
+   - Same steps but use `src/dashboards/admin_dashboard.py`
+
+### Docker Alternative (Render):
+- **Dockerfile path:** `spaces/user_dashboard/Dockerfile`
+- Render auto-detects and builds
+
+---
+
+## Option 3: Hugging Face Spaces
+
+**Pros:** ML-focused, Docker support, good community  
+**Cons:** Slightly more complex than Streamlit Cloud
 
 Hugging Face Spaces supports several hosting options. Since this project uses Streamlit dashboards, the two practical choices are:
 
@@ -9,7 +89,7 @@ Hugging Face Spaces supports several hosting options. Since this project uses St
 
 Below are instructions for both approaches. If you prefer a single unified deployment method that works regardless of SDK limitations, use the **Docker** approach.
 
-### Option A — Native Streamlit (quick and simple)
+### Hugging Face — Native Streamlit (quick and simple)
 
 1. **Create New Space:**
    - Go to https://huggingface.co/new-space
@@ -27,7 +107,7 @@ Below are instructions for both approaches. If you prefer a single unified deplo
 
 4. **Deploy:** The Space will auto-build and deploy using the Streamlit runtime.
 
-### Option B — Docker (recommended for this repo)
+### Hugging Face — Docker (recommended for this repo)
 
 Use Docker if you want reproducible builds or to run the same repository layout without copying individual files.
 
@@ -51,7 +131,9 @@ Use Docker if you want reproducible builds or to run the same repository layout 
    - Docker is slightly slower to build but guarantees the same environment locally and in the Space.
    - Use Docker if you want to include the entire repo layout and any extra utilities.
 
-### Backend API Deployment (Render.com)
+---
+
+## Backend API Deployment (Render.com)
 
 1. **Create New Web Service:**
    - Go to https://render.com
@@ -60,7 +142,7 @@ Use Docker if you want reproducible builds or to run the same repository layout 
 
 2. **Configure Service:**
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `cd app/backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+   - **Start Command:** `cd src/backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
    - **Environment Variables:**
      - `GEMINI_API_KEY`: your-api-key
 
@@ -72,7 +154,13 @@ Use Docker if you want reproducible builds or to run the same repository layout 
 
 1. **New Project from GitHub**
 2. **Environment Variables:** `GEMINI_API_KEY`
-3. **Start Command:** `cd app/backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+3. **Start Command:** `cd src/backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+Note: If your platform's UI still references the old `app/backend` path (causing a "No such file or directory" error), use one of these options:
+
+- Use the repository's root-level `start_server.sh` as the Start Command: `bash start_server.sh`
+- Or set the Start Command explicitly to: `cd src/backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+- We also include a `Procfile` in the repo that runs the correct command; some platforms detect and use it automatically.
 
 ## Deployment Checklist
 
